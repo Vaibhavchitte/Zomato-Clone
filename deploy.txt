@@ -1,0 +1,34 @@
+**install jenkins
+---------------------------------------------------------
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo yum upgrade
+sudo dnf install java-17-amazon-corretto -y
+sudo yum install jenkins -y
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+---------------------------------------------------------
+**install java
+sudo yum install java-17-amazon-corretto-devel
+-------------------------------------------------------
+**install nginx
+sudo yum install nginx -y
+sudo rm -rf /usr/share/nginx/html/*
+sudo cp -r /home/ec2-user/Zomato-Clone/build/* /usr/share/nginx/html/
+-----------------------------------------------------------
+**install nodeJS
+sudo yum install -y gcc-c++ make
+curl -sL https://rpm.nodesource.com/setup_16.x | sudo bash -
+sudo yum install -y nodejs
+-----------------------------------------------------------
+**increase file size for /tmp
+sudo vi /etc/fstab
+tmpfs /tmp tmpfs defaults,size=2G 0 0     ----> Add new line
+sudo mount -o remount /tmp
+systemctl restart jenkins
+-------------------------------------------------------------------------------------
+**add root permission for jenkins
+sudo visudo
+jenkins ALL=(ALL) NOPASSWD: ALL  ----> add line
+-------------------------------------------------------------------------------------
