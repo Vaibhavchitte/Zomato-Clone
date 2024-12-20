@@ -1,31 +1,66 @@
 pipeline {
-  agent any
-  stages {
-    stage('Unit Test') {
-      steps {
-        sh 'mvn clean test'
-      }
+    agent any
+
+    environment {
+        NGINX_WEB_DIR = '/usr/share/nginx/html'  // NGINX Web Directory
+        BUILD_DIR = '${WORKSPACE}/Zomato-Clone/build'  // Path to the local build directory in Jenkins workspace
     }
-    stage('Deploy Standalone') {
-      steps {
-        sh 'mvn deploy -P standalone'
-      }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the GitHub repository
+                git 'https://github.com/your-username/Zomato-Clone.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    // Install Node.js dependencies
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    // Build the React app for production
+                    sh 'npm run build'
+                }
+            }
+        }
+
+        stage('Deploy to NGINX') {
+            steps {
+                script {
+                    // Copy build files to the NGINX directory
+                    sh """
+                    sudo rm -rf ${NGINX_WEB_DIR}/*
+                    sudo cp -r ${BUILD_DIR}/* ${NGINX_WEB_DIR}/
+                    """
+                }
+            }
+        }
+
+        stage('Restart NGINX') {
+            steps {
+                script {
+                    // Restart NGINX to apply changes
+                    sh 'sudo systemctl restart nginx'
+                }
+            }
+        }
     }
-    stage('Deploy AnyPoint') {
-      environment {
-        ANYPOINT_CREDENTIALS = credentials('anypoint.credentials')
-      }
-      steps {
-        sh 'mvn deploy -P arm -Darm.target.name=local-4.0.0-ee -Danypoint.username=${ANYPOINT_CREDENTIALS_USR}  -Danypoint.password=${ANYPOINT_CREDENTIALS_PSW}'
-      }
+
+    post {
+        success {
+            echo 'Deployment was successful!'
+        }
+
+        failure {
+            echo 'Deployment failed. Check the logs for errors.'
+        }
     }
-    stage('Deploy CloudHub') {
-      environment {
-        ANYPOINT_CREDENTIALS = credentials('anypoint.credentials')
-      }
-      steps {
-        sh 'mvn deploy -P cloudhub -Dmule.version=4.0.0 -Danypoint.username=${ANYPOINT_CREDENTIALS_USR} -Danypoint.password=${ANYPOINT_CREDENTIALS_PSW}'
-      }
-    }
-  }
 }
